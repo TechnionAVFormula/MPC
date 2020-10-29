@@ -180,14 +180,6 @@ class Integration(DynamicState):
         method variables:
         k1, k2, k3, k4 - partial itegration steps in Runge Kutta 4
 
-        equations:
-        k1 = f(X_k, u)
-        k2 =  f(X_k + dt * k1 / 2 , u)
-        k3 =  f(X_k + dt * k2 / 2 , u)
-        k4 =  f(X_k + dt * k3  , u)
-        
-        State_{i+1} = State_{i} + 1 / 6 * dt (k1 + 2 * k2 + 2 * k3 + k4) 
-
         """
 
         self.dt = dt
@@ -200,6 +192,14 @@ class Integration(DynamicState):
         input:
         delta - Steering angle
         D     - Driving command 
+
+        equations:
+        k1 = f(X_k, u)
+        k2 =  f(X_k + dt * k1 / 2 , u)
+        k3 =  f(X_k + dt * k2 / 2 , u)
+        k4 =  f(X_k + dt * k3  , u)
+        
+        State_{i+1} = State_{i} + 1 / 6 * dt (k1 + 2 * k2 + 2 * k3 + k4) 
         """
 
         k1 = self.state_dynamic_derivative(self.State, delta, D)
