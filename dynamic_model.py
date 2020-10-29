@@ -75,7 +75,7 @@ class DynamicState(Order):
         """
         self.State = np.array([x, y, phi, v_x, v_y, r])
 
-    def state_dynamic_derivative(self, State, delta, D):
+    def state_derivative(self, State, delta, D):
         """
         parameters
         -------------------
@@ -167,47 +167,6 @@ class DynamicState(Order):
         r_target = delta * v_x / L
         torque_moment_ = (r_target - r) * P_TV
         return torque_moment_
-
-
-class Integration(DynamicState):
-    def __init__(self, dt=0.1):
-        """
-        parameters:
-        ---------------
-        defult integration time 
-        dt = 0.1 [sec]
-
-        method variables:
-        k1, k2, k3, k4 - partial itegration steps in Runge Kutta 4
-
-        equations:
-        k1 = f(X_k, u)
-        k2 =  f(X_k + dt * k1 / 2 , u)
-        k3 =  f(X_k + dt * k2 / 2 , u)
-        k4 =  f(X_k + dt * k3  , u)
-        
-        State_{i+1} = State_{i} + 1 / 6 * dt (k1 + 2 * k2 + 2 * k3 + k4) 
-
-        """
-
-        self.dt = dt
-
-    def RK4(self, delta, D):
-
-        """
-        parameters
-        -------------------
-        input:
-        delta - Steering angle
-        D     - Driving command 
-        """
-
-        k1 = self.state_dynamic_derivative(self.State, delta, D)
-        k2 = self.state_dynamic_derivative(self.State + self.dt * k1 / 2, delta, D)
-        k3 = self.state_dynamic_derivative(self.State + self.dt * k2 / 2, delta, D)
-        k4 = self.state_dynamic_derivative(self.State + self.dt * k3, delta, D)
-
-        self.State = self.State + 1 / 6 * self.dt * (k1 + 2 * k2 + 2 * k3 + k4)
 
 
 def main():
