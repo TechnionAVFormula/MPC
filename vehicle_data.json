@@ -1,0 +1,23 @@
+{
+    "wheel_base"                : 0.287,
+    "Rear_length"               : 0.0545,
+ 
+    "Vehicle_weight"            : 0.0518,
+    "Vehicle_inertia_moment"    : 0.00035,
+  
+    "Magic_B_rear" 	            : 3.3852,
+    "Magic_C_rear" 	            : 1.2691,
+    "Magic_D_rear" 	            : 0.1737,
+  
+    "Magic_B_front"	            : 2.579,
+    "Magic_C_front"             : 1.2,
+    "Magic_D_front"             : 0.192,
+  
+    "Rollin_resistance" 	    : 0.041,
+    "Drag" 	                    : 27.8E-6,
+    "Dra_proportional"      	: 0.029,
+    "Proportional_gain_torque" 	: 0.033,
+  
+    "maxAlpha"                  : 44
+  }
+  

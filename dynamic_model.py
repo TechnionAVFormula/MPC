@@ -75,7 +75,7 @@ class DynamicState(Order):
         """
         self.State = np.array([x, y, phi, v_x, v_y, r])
 
-    def state_dynamic_derivative(self, State, delta, D):
+    def state_derivative(self, State, delta, D):
         """
         parameters
         -------------------
@@ -169,6 +169,7 @@ class DynamicState(Order):
         return torque_moment_
 
 
+<<<<<<< HEAD
 class Integration(DynamicState):
     def __init__(self, dt=0.1):
         """
@@ -210,6 +211,8 @@ class Integration(DynamicState):
         self.State = self.State + 1 / 6 * self.dt * (k1 + 2 * k2 + 2 * k3 + k4)
 
 
+=======
+>>>>>>> 026cb9e03da47081bcaf06211646fc3340d2d495
 def main():
     pass
 
