@@ -169,50 +169,6 @@ class DynamicState(Order):
         return torque_moment_
 
 
-<<<<<<< HEAD
-class Integration(DynamicState):
-    def __init__(self, dt=0.1):
-        """
-        parameters:
-        ---------------
-        defult integration time 
-        dt = 0.1 [sec]
-
-        method variables:
-        k1, k2, k3, k4 - partial itegration steps in Runge Kutta 4
-
-        """
-
-        self.dt = dt
-
-    def RK4(self, delta, D):
-
-        """
-        parameters
-        -------------------
-        input:
-        delta - Steering angle
-        D     - Driving command 
-
-        equations:
-        k1 = f(X_k, u)
-        k2 =  f(X_k + dt * k1 / 2 , u)
-        k3 =  f(X_k + dt * k2 / 2 , u)
-        k4 =  f(X_k + dt * k3  , u)
-        
-        State_{i+1} = State_{i} + 1 / 6 * dt (k1 + 2 * k2 + 2 * k3 + k4) 
-        """
-
-        k1 = self.state_dynamic_derivative(self.State, delta, D)
-        k2 = self.state_dynamic_derivative(self.State + self.dt * k1 / 2, delta, D)
-        k3 = self.state_dynamic_derivative(self.State + self.dt * k2 / 2, delta, D)
-        k4 = self.state_dynamic_derivative(self.State + self.dt * k3, delta, D)
-
-        self.State = self.State + 1 / 6 * self.dt * (k1 + 2 * k2 + 2 * k3 + k4)
-
-
-=======
->>>>>>> 026cb9e03da47081bcaf06211646fc3340d2d495
 def main():
     pass
 
