@@ -1,0 +1,3 @@
+read about casadi:
+https://web.casadi.org/
+http://casadi.sourceforge.net/v3.4.4/users_guide/casadi-users_guide.pdf
