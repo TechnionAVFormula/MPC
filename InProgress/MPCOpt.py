@@ -6,6 +6,10 @@ suggested optimizer: casadi
 """
 
 import casadi
+import sys
+
+sys.path.insert(0, "./..")
+from dynamic_model import DynamicState
 
 
 class MpcOpt:
@@ -58,9 +62,20 @@ class MpcOpt:
 
         self.opti = casadi.Opti()  # import opti stack
 
-        self.x0 = self.opti.parameter(
+        self.x_current = self.opti.parameter(
             10
-        )  # current extended state [X, Y, phi, vx, vy, r, delta, D, V_theta]
+        )  # current extended state [state: {X, Y, phi, vx, vy, r}, path velocity: {v_theta},
+        # control efforts: {delta, D, V_theta}]
+
+        self.state_predict = self.opti.parameter(10, HORIZON)
+
+        self.path_ref = self.opti.parameter(2, HORIZON)  # The ref trajectory
+        self.x_ref = self.path_ref[1, :]
+        self.y_ref = self.path_ref[2, :]
+
+    def _optimization_constraints(self):
+
+        self.opti.subject_to(self.state_predict[:, 0] == self.x_current[:])
 
     class Matrics:
         def __init__(self):
