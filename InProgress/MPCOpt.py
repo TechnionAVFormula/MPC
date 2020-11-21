@@ -75,7 +75,9 @@ class MpcOpt:
 
     def _optimization_constraints(self):
 
-        self.opti.subject_to(self.state_predict[:, 0] == self.x_current[:])
+        self.opti.subject_to(
+            self.state_predict[:, 0] == self.x_current[:]
+        )  # initial condition
 
     class Matrics:
         def __init__(self):
