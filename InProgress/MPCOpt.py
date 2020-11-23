@@ -12,7 +12,7 @@ sys.path.insert(0, "./..")
 from dynamic_model import DynamicState
 
 
-class MpcOpt:
+class MpcOpt(DynamicState):
     def __init__(
         self,
         QC=1.0,
@@ -65,11 +65,11 @@ class MpcOpt:
         self.x_current = self.opti.parameter(
             10
         )  # current extended state [state: {X, Y, phi, vx, vy, r}, path velocity: {v_theta},
-        # control efforts: {delta, D, V_theta}]
+        # control efforts: {delta, D, DV_theta}]
 
-        self.state_predict = self.opti.parameter(10, HORIZON)
+        self.state_predict = self.opti.parameter(10, self.horizon)
 
-        self.path_ref = self.opti.parameter(2, HORIZON)  # The ref trajectory
+        self.path_ref = self.opti.parameter(2, self.horizon)  # The ref trajectory
         self.x_ref = self.path_ref[1, :]
         self.y_ref = self.path_ref[2, :]
 
@@ -78,6 +78,13 @@ class MpcOpt:
         self.opti.subject_to(
             self.state_predict[:, 0] == self.x_current[:]
         )  # initial condition
+
+        for i in range(1, self.horizon):
+            self.state_predict[0:5, i] == self.state_derivative(
+                self.state_predict[:, i - 1],
+                self.state_predict[:, 7],
+                self.state_predict[:, 8],
+            )
 
     class Matrics:
         def __init__(self):
