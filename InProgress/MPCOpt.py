@@ -9,7 +9,7 @@ import casadi
 import sys
 
 sys.path.insert(0, "./..")
-from dynamic_model import DynamicState
+from MPC.dynamic_model import DynamicState
 
 
 class MpcOpt(DynamicState):
@@ -22,6 +22,7 @@ class MpcOpt(DynamicState):
         RU=[1.0, 1.0, 1.0],
         RDU=[1.0, 1.0, 1.0],
         HORIZON=10,
+        dt=0.1,
     ):
         """
         inputs:
@@ -43,6 +44,8 @@ class MpcOpt(DynamicState):
 
         horizon: prediction steps 
 
+        path: objective path 
+
         Members:
         ------------
         
@@ -54,24 +57,27 @@ class MpcOpt(DynamicState):
         ------------------------------
 
         """
+        self.time = dt
         self.matrics = self.Matrics()
         self.matrics.ru = casadi.diag(RU)
         self.matrics.rdU = casadi.diag(RDU)
         self.matrics.q = casadi.diag([QC, QL, GAMMA])
         self.horizon = HORIZON
+        self.R = R
 
         self.opti = casadi.Opti()  # import opti stack
 
-        self.x_current = self.opti.parameter(
-            10
-        )  # current extended state [state: {X, Y, phi, vx, vy, r}, path velocity: {v_theta},
-        # control efforts: {delta, D, DV_theta}]
-
-        self.state_predict = self.opti.parameter(10, self.horizon)
+        self.x_current = self.opti.parameter(10)
+        # current extended state: {X_0, Y_0, phi_0, vx_0, vy_0, r_0}
+        # path velocity: {v_theta}
+        # control efforts: {delta, D, DV_theta}
 
         self.path_ref = self.opti.parameter(2, self.horizon)  # The ref trajectory
         self.x_ref = self.path_ref[1, :]
         self.y_ref = self.path_ref[2, :]
+
+        self.state_predict = self.opti.variable(10, self.horizon)
+        self.delta_u = self.opti.variable(3, self.horizon - 1)
 
     def _optimization_constraints(self):
 
@@ -80,11 +86,49 @@ class MpcOpt(DynamicState):
         )  # initial condition
 
         for i in range(1, self.horizon):
-            self.state_predict[0:5, i] == self.state_derivative(
-                self.state_predict[:, i - 1],
-                self.state_predict[:, 7],
-                self.state_predict[:, 8],
+            # state prediction
+            self.opti.subject_to(
+                self.state_predict[:6, i]
+                == self.state_derivative(
+                    self.state_predict[0:6, i - 1],
+                    self.state_predict[:, 8],
+                    self.state_predict[:, 9],
+                )
             )
+
+            # traj velocity prediction
+            self.opti.subject_to(
+                self.state_predict[6, i]
+                == (
+                    self.state_predict[6, i - 1]
+                    + casadi.dot(
+                        (self.path_ref[:, i] - self.path_ref[:, i - 1])
+                        / casadi.norm_2(self.path_ref[:, i] - self.path_ref[:, i - 1]),
+                        (self.state_predict[3:5, i])
+                        / casadi.norm_2(self.state_predict[3:5, i]),
+                    )
+                    / self.time
+                )
+            )
+
+            # control efforts state
+            self.opti.subject_to(
+                self.state_predict[7:, i]
+                == (self.state_predict[7:, i - 1] + self.delta_u[:, i - 1] / self.time)
+            )
+
+            self.opti.subject_to(
+                (self.state_predict(0, i) - self.path_ref[0, i]) ** 2
+                + (self.state_predict(1, i) - self.path_ref[1, i]) ** 2
+                <= self.R ** 2
+            )
+
+            # require the bounding of delta_u and ellipsoidal constraint
+
+        # def _cost_function(self):
+        #     cost = 0
+        #     for i in range(self.horizon):
+        #         cost += casadi.mtimes(,self.matrics.q)
 
     class Matrics:
         def __init__(self):
