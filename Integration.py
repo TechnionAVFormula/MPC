@@ -1,8 +1,10 @@
-import math 
 import numpy as np
+from .KinModel import KinModel
+from .dynamic_model import DynamicState
+
 
 class Integration:
-    def __init__(self, model, dt=0.1):
+    def __init__(self, state, dt=0.1):
         """
         parameters:
         ---------------
@@ -20,24 +22,24 @@ class Integration:
         """
 
         self.dt = dt
-        self.model = model
+        self.kin_m = KinModel()
+        self.dyn_m = DynamicState()
+        self.state = np.array[0, 0, 0, 0, 0, 0]
 
     def RK4(self, delta, D):
-
         """
         parameters
         -------------------
-        input:
         delta - Steering angle
         D     - Driving command 
         """
 
-        k1 = self.blend(self.State, delta, D)
-        k2 = self.blend(self.State + self.dt * k1 / 2, delta, D)
-        k3 = self.blend(self.State + self.dt * k2 / 2, delta, D)
-        k4 = self.blend(self.State + self.dt * k3, delta, D)
+        k1 = self.blend(self.state, delta, D)
+        k2 = self.blend(self.state + self.dt * k1 / 2, delta, D)
+        k3 = self.blend(self.state + self.dt * k2 / 2, delta, D)
+        k4 = self.blend(self.state + self.dt * k3, delta, D)
 
-        self.State = self.State + 1 / 6 * self.dt * (k1 + 2 * k2 + 2 * k3 + k4)
+        self.state = self.state + 1 / 6 * self.dt * (k1 + 2 * k2 + 2 * k3 + k4)
 
         # k1 = self.model.state_derivative(self.model.State, delta, D)
         # k2 = self.model.state_derivative(self.model.State + self.dt * k1 / 2, delta, D)
@@ -45,16 +47,18 @@ class Integration:
         # k4 = self.model.state_derivative(self.model.State + self.dt * k3, delta, D)
 
         # self.model.State = self.model.State + 1 / 6 * self.dt * (k1 + 2 * k2 + 2 * k3 + k4)
-   
-    def lambda(self, Vx):
+
+    def lambd(self, Vx):
         Vx_blend_max = 5
         Vx_blend_min = 3
-        return min(max((Vx-Vx_blend_min)/(Vx_blend_max-Vx_blend_min),0),1)
+        return min(max((Vx - Vx_blend_min) / (Vx_blend_max - Vx_blend_min), 0), 1)
 
     def blend(self, state, delta, D):
-        dyn_state_deriv = self.DynamicState.state_derivative(state, delta, D)
-        kin_state_deriv = self.KinModel.state_derivative(state, delta, D)
-        return np.array(lambda(dyn_state_deriv[0]) * dyn_state_deriv) + np.array((1 - lambda(kin_state_deriv[0])) * kin_state_deriv)
+        dyn_state_deriv = self.dyn_m.state_derivative(state, delta, D)
+        kin_state_deriv = self.kin_m.state_derivative(state, delta, D)
+        return np.array(self.lambd(dyn_state_deriv[0]) * dyn_state_deriv) + np.array(
+            (1 - self.lambd(kin_state_deriv[0])) * kin_state_deriv)
+
 
 def main():
     pass
