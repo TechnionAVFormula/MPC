@@ -73,6 +73,7 @@ class DynamicState(Order):
         r   - angular velocity
 
         """
+        super().__init__()
         self.State = np.array([x, y, phi, v_x, v_y, r])
 
     def state_derivative(self, State, delta, D):

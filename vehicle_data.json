@@ -13,10 +13,14 @@
     "Magic_C_front"             : 1.2,
     "Magic_D_front"             : 0.192,
   
-    "Rollin_resistance" 	      : 0.041,
+    "Rollin_resistance" 	    : 0.041,
     "Drag" 	                    : 27.8E-6,
-    "Dra_proportional"      	  : 0.029,
+    "Dra_proportional"      	: 0.029,
     "Proportional_gain_torque" 	: 0.033,
+
+    "Vx_blend_min"              : 5,
+    "Vx_blend_max"              : 3,
+    "Vehicle_max_speed"         : 22,
   
     "maxAlpha"                  : 44
   }
