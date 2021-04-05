@@ -14,11 +14,14 @@ L_FRONT = L - L_REAR  # front length
 R_delta = OPT_PARAMS["R_delta"]
 R_Drive = OPT_PARAMS["R_Drive"]
 
+max_delta = VEHICLE_DATA["maxAlpha"]
+
 q_beta = OPT_PARAMS["q_beta"]
 q_s = OPT_PARAMS["q_s"]
 q_ss = OPT_PARAMS["q_ss"]
-q_e = OPT_PARAMS["q_e"]
+q_c = OPT_PARAMS["q_c"]
 q_l = OPT_PARAMS["q_l"]
+gamma = OPT_PARAMS["gamma"]
 
 horizon = OPT_PARAMS["horizon"]
 
@@ -27,56 +30,88 @@ V_max = VEHICLE_DATA["Vehicle_max_speed"]
 
 cost_R = np.array([[R_Drive, 0], [0, R_delta]])
 
+
+def path_deriv(path, y):
+    return 3*path[0]*(y**2) + 2*path[1]*y + path[2]
+
+
+def dist_line_from_point(slope, y_ref, x_ref, y_car, x_car):
+    A = -slope
+    B = 1
+    C = slope * y_ref - x_ref
+    return abs(A*y_car + B*x_car + C) / math.sqrt(A**2 + B**2)
+
+
 def J(state, path, t_param):
     x_ref = path[0]*t_param**3 + path[1]*t_param**2 + path[2]*t_param + path[0]
     y_ref = t_param
-    path_lin = path_driv(path)
-    e_c = #dist state position from path_deriv
-    e_l = #dist state position from 1/path_deriv
-    return 
+    e_c_hat = dist_line_from_point(path_deriv(path, y_ref), y_ref, x_ref, state.y, state.x)
+    e_l_hat = dist_line_from_point(1 / path_deriv(path, y_ref), y_ref, x_ref, state.y, state.x)
+    return q_c*e_c_hat**2 + q_l*e_l_hat**2 - gamma*V_max
+
 
 def R(command):
     return np.transpose(np.array(command)).dot(cost_R.dot(np.array(command)))
+
 
 def L(dyn_m, kin_m, command):
     beta_dyn = math.atan2(dyn_m.y_dot , dyn_m.x_dot)
     beta_kin = math.atan2(math.tan(command[1]) * L_REAR , (L_REAR + L_FRONT))
     return  q_beta * (beta_kin - beta_dyn)**2 
 
+
 def C(slack):
-    return q_s * abs(slack) + q_ss * (slack**2)
+    return q_s * slack + q_ss * (slack**2)
+
 
 def do_step(integrator: Integration, command, path):
     integrator.RK4(command[1],command[0])
 
+
 def step_cost(integrator: Integration, command, path, slack):
     return J(integrator.state, path, integrator.t_param) + R(command) + L(integrator.dyn_m, integrator.kin_m, command) + C(slack)
 
+
 def check_constraints(integrator: Integration, command, slack, path):
+    x_ref = path[0] * integrator.t_param ** 3 + path[1] * integrator.t_param ** 2 + path[2] * integrator.t_param + path[0]
+    y_ref = integrator.t_param
+    if (integrator.state.x - x_ref)**2 + (integrator.state.y - y_ref)**2 > R_track**2 + slack:
+        return False
+    if command[0] > 1 or command[0] < -1 or command[1] > max_delta or command[1] < -max_delta:
+        return False
 
 
-"""
-    params:
-    -------------
-    state - np.array, vehicle state after blend
-    commands - 2 x horizon np.array, commands for cost calc
-                commands[i][0] - D
-                commands[i][1] - delta
-    slack - 1 x horizon np.array, slack vars to be optimized
-    
-    return:
-    --------------
-    total_cost - cost of given command matrix
-    horizon_state - last state to be in after horizon drive
-    steps_cost - cost of every step along the way, 1 x horizon vector
-"""
+
+    return True
+
+
 def total_cost_calc(state, commands, slack, path, steps_cost = None, prev_total_cost = 0, prev_t_param = 0, new_state = False):
+    """
+        params:
+        -------------
+        state - np.array, vehicle state after blend
+        commands - 2 x horizon np.array, commands for cost calc
+                    commands[i][0] - D
+                    commands[i][1] - delta
+        slack - 1 x horizon np.array, slack vars to be optimized
+        path - np.array holding the parameters of the path polynomial
+        steps_cost - Queue of the costs of the calculated costs
+        prev_total_cost - the previous output of this function
+        prev_t_param -
+
+        return:
+        --------------
+        total_cost - cost of given command matrix
+        horizon_state - last state to be in after horizon drive
+        steps_cost - cost of every step along the way, 1 x horizon vector
+    """
     total_cost = 0
     if new_state:
         t_param = 0
     else:
         t_param = prev_t_param
     integrator = Integration(state=state, t_param=t_param)
+    # this calc is done while no new state from state estimation was given and no internal (MPC) time step has passed
     if len(commands) > 1 or new_state:
         steps_cost = Queue()
         for step in range(horizon):
@@ -87,6 +122,7 @@ def total_cost_calc(state, commands, slack, path, steps_cost = None, prev_total_
             total_cost += step_c
             do_step(integrator, commands[step], path)
 
+    # this calc is done after at least one internal time step was taken but no new state was given from state estimation
     else:
         if not check_constraints(integrator, commands[0], slack[0], path):
             return math.inf, None, None, 0
@@ -96,4 +132,5 @@ def total_cost_calc(state, commands, slack, path, steps_cost = None, prev_total_
         do_step(integrator, commands[0], path)
         
     return total_cost, integrator.state, steps_cost, integrator.t_param
-    
+
+
