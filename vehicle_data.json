@@ -18,6 +18,9 @@
     "Dra_proportional"      	: 0.029,
     "Proportional_gain_torque" 	: 0.033,
 
+    "p_long"                    : 2,
+    "p_ellipse"                 : 3,
+
     "Vx_blend_min"              : 5,
     "Vx_blend_max"              : 3,
     "Vehicle_max_speed"         : 22,

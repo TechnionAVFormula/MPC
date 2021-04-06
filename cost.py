@@ -11,10 +11,16 @@ L = VEHICLE_DATA["Wheel_base"]  # Total length
 L_REAR = VEHICLE_DATA["Rear_length"]  # rear length
 L_FRONT = L - L_REAR  # front length
 
+D_R = VEHICLE_DATA["Magic_D_rear"]
+D_F = VEHICLE_DATA["Magic_D_front"]
+
 R_delta = OPT_PARAMS["R_delta"]
 R_Drive = OPT_PARAMS["R_Drive"]
 
 max_delta = VEHICLE_DATA["maxAlpha"]
+
+p_long = VEHICLE_DATA["p_long"]
+p_ellipse = VEHICLE_DATA["p_ellipse"]
 
 q_beta = OPT_PARAMS["q_beta"]
 q_s = OPT_PARAMS["q_s"]
@@ -79,13 +85,19 @@ def check_constraints(integrator: Integration, command, slack, path):
         return False
     if command[0] > 1 or command[0] < -1 or command[1] > max_delta or command[1] < -max_delta:
         return False
-
-
+    if integrator.dyn_m.rear_tire_force_y(
+            integrator.dyn_m.rear_slip_angle(integrator.dyn_m.v_y, integrator.dyn_m.v_x))**2 + (
+            p_long * integrator.dyn_m.tire_force_x_(command[0], integrator.dyn_m.v_x))**2 > (p_ellipse * D_R)**2:
+        return False
+    if integrator.dyn_m.front_tire_force_y(
+            integrator.dyn_m.front_slip_angle(integrator.dyn_m.v_y, integrator.dyn_m.v_x))**2 + (
+            p_long * integrator.dyn_m.tire_force_x_(command[0], integrator.dyn_m.v_x))**2 > (p_ellipse * D_F)**2:
+        return False
 
     return True
 
 
-def total_cost_calc(state, commands, slack, path, steps_cost = None, prev_total_cost = 0, prev_t_param = 0, new_state = False):
+def total_cost_calc(state, commands, slack, path, steps_cost=None, prev_total_cost=0, prev_t_param=0, new_state=False):
     """
         params:
         -------------
