@@ -63,7 +63,7 @@ def R(command):
 def L(dyn_m, kin_m, command):
     beta_dyn = math.atan2(dyn_m.y_dot , dyn_m.x_dot)
     beta_kin = math.atan2(math.tan(command[1]) * L_REAR , (L_REAR + L_FRONT))
-    return  q_beta * (beta_kin - beta_dyn)**2 
+    return q_beta * (beta_kin - beta_dyn)**2
 
 
 def C(slack):

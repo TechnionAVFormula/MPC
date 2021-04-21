@@ -83,3 +83,37 @@ class MomentumSGD(Optimizer):
 
             self.prev_v[self.param_idx] = curr_v
             self.param_idx += 1
+
+
+class DMD(Optimizer):
+    def __init__(self, params, loss_func, breg_div, control_dist, learn_rate=1e-3):
+        """
+        :param params: The model parameters to optimize
+        :param learn_rate: Learning rate
+        :param reg: L2 Regularization strength
+        :param momentum: Momentum factor
+        """
+        super().__init__(params)
+        self.learn_rate = learn_rate
+        self.loss_func = loss_func
+        self.breg_div = breg_div
+        self.control_dist = control_dist
+
+        self.prev_v = [0.0] * len(self.params)
+        self.param_idx = 0
+
+    def step(self):
+        for p, dp in self.params:
+            if dp is None:
+                continue
+
+            if self.param_idx >= len(self.params):
+                self.param_idx = 0
+
+            dp += self.reg * p
+
+            curr_v = self.momentum * self.prev_v[self.param_idx] - self.learn_rate * dp
+            p += curr_v
+
+            self.prev_v[self.param_idx] = curr_v
+            self.param_idx += 1
