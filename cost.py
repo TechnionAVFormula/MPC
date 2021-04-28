@@ -111,7 +111,7 @@ def constraints_cost_calc(integrator: Integration, command, slack, path):
     return constraints_cost
 
 
-def total_cost_calc(state, commands, slack, path, steps_cost=None, prev_total_cost=0, prev_t_param=0, new_state=False):
+def total_cost_calc(state, commands, slack, path, sub_horizon, steps_cost=None, prev_total_cost=0, prev_t_param=0, new_state=False):
     """
         params:
         -------------
@@ -140,7 +140,7 @@ def total_cost_calc(state, commands, slack, path, steps_cost=None, prev_total_co
     # this calc is done while no new state from state estimation was given and no internal (MPC) time step has passed
     if len(commands) > 1 or new_state:
         steps_cost = Queue()
-        for step in range(horizon):
+        for step in range(sub_horizon):
             step_c = constraints_cost_calc(integrator, commands[step], slack[step], path)
             step_c += step_cost(integrator, commands[step], path, slack[step])
             steps_cost.put(step_c)
