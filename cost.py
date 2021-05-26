@@ -60,7 +60,7 @@ def R(command):
     return np.transpose(np.array(command)).dot(cost_R.dot(np.array(command)))
 
 
-def L(dyn_m, kin_m, command):
+def L(dyn_m, command):
     beta_dyn = math.atan2(dyn_m.y_dot, dyn_m.x_dot)
     beta_kin = math.atan2(math.tan(command[1]) * L_REAR, (L_REAR + L_FRONT))
     return q_beta * (beta_kin - beta_dyn) ** 2
@@ -70,13 +70,12 @@ def C(slack):
     return q_s * slack + q_ss * (slack ** 2)
 
 
-def do_step(integrator: Integration, command, path):
+def do_step(integrator: Integration, command):
     integrator.RK4(command[1], command[0])
 
 
 def step_cost(integrator: Integration, command, path, slack):
-    return J(integrator.state, path, integrator.t_param) + R(command) + L(integrator.dyn_m, integrator.kin_m,
-                                                                          command) + C(slack)
+    return J(integrator.state, path, integrator.t_param) + R(command) + L(integrator.dyn_m, command) + C(slack)
 
 
 def constraints_cost_calc(integrator: Integration, command, slack, path):
@@ -138,21 +137,21 @@ def total_cost_calc(state, commands, slack, path, sub_horizon, steps_cost=None, 
         t_param = prev_t_param
     integrator = Integration(state=state, t_param=t_param)
     # this calc is done while no new state from state estimation was given and no internal (MPC) time step has passed
-    if len(commands) > 1 or new_state:
+    if (len(commands) / 2) > 1 or new_state:
         steps_cost = Queue()
         for step in range(sub_horizon):
-            step_c = constraints_cost_calc(integrator, commands[step], slack[step], path)
-            step_c += step_cost(integrator, commands[step], path, slack[step])
+            step_c = constraints_cost_calc(integrator, commands[:, step], slack[step], path)
+            step_c += step_cost(integrator, commands[:, step], path, slack[step])
             steps_cost.put(step_c)
             total_cost += step_c
-            do_step(integrator, commands[step], path)
+            do_step(integrator, commands[:, step])
 
     # this calc is done after at least one internal time step was taken but no new state was given from state estimation
     else:
-        step_c = constraints_cost_calc(integrator, commands[0], slack[0], path)
-        step_c += step_cost(integrator, commands[0], path, slack[0])
+        step_c = constraints_cost_calc(integrator, commands[:, 0], slack[0], path)
+        step_c += step_cost(integrator, commands[:, 0], path, slack[0])
         total_cost = prev_total_cost - steps_cost.get(0) + step_c
         steps_cost.put(step_c)
-        do_step(integrator, commands[0], path)
+        do_step(integrator, commands[:, 0],)
 
     return total_cost, integrator.state, steps_cost, integrator.t_param
