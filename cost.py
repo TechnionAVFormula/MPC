@@ -115,20 +115,22 @@ def total_cost_calc(state, commands, slack, path, sub_horizon, steps_cost=None, 
         params:
         -------------
         state - np.array, vehicle state after blend
-        commands - 2 x horizon np.array, commands for cost calc
+        commands - 2 x horizon torch.Tensor, commands for cost calc
                     commands[i][0] - D
                     commands[i][1] - delta
         slack - 1 x horizon np.array, slack vars to be optimized
         path - np.array holding the parameters of the path polynomial
         steps_cost - Queue of the costs of the calculated costs
         prev_total_cost - the previous output of this function
-        prev_t_param -
+        prev_t_param - the previous parameter for the path parametrization
+        new_state - flag denoting whether or not we got a new state from state estimation and the state needs to be realigned
 
         return:
         --------------
         total_cost - cost of given command matrix
         horizon_state - last state to be in after horizon drive
         steps_cost - cost of every step along the way, 1 x horizon vector
+        horizon_param - the parameter of the path at the horizon location
     """
     total_cost = 0
     if new_state:

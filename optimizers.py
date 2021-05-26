@@ -150,7 +150,7 @@ class DMD(Optimizer):
     def step(self):
         # the final action vector
         theta = torch.zeros([2, horizon + self.sub_horizon], requires_grad=True)
-        # u[0,:] - delta, u[1,:] - D
+        # u[0,:] - D, u[1,:] - delta
         u = torch.zeros([2, horizon + self.sub_horizon])
         # first state
         x_curr = self.x
@@ -168,7 +168,7 @@ class DMD(Optimizer):
             u[:, t:t + self.sub_horizon] = self.control_dist(theta[:, t:t + self.sub_horizon])
 
             # choose an state estimation with regard to the chosen action and state normal distribution
-            self.integrator.RK4(u[0, t], u[1, t])
+            self.integrator.RK4(u[1, t], u[0, t])
             mean = self.integrator.state
             x_curr = np.random.normal(mean, self.state_uncertainty)
             # update the integrator to the current state
