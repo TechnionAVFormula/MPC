@@ -38,45 +38,44 @@ cost_R = np.array([[R_Drive, 0], [0, R_delta]])
 
 
 def path_deriv(path, y):
-    return 3*path[0]*(y**2) + 2*path[1]*y + path[2]
+    return 3 * path[0] * (y ** 2) + 2 * path[1] * y + path[2]
 
 
 def dist_line_from_point(slope, y_ref, x_ref, y_car, x_car):
     A = -slope
     B = 1
     C = slope * y_ref - x_ref
-    return abs(A*y_car + B*x_car + C) / math.sqrt(A**2 + B**2)
+    return abs(A * y_car + B * x_car + C) / math.sqrt(A ** 2 + B ** 2)
 
 
 def J(state, path, t_param):
-    x_ref = path[0]*t_param**3 + path[1]*t_param**2 + path[2]*t_param + path[0]
+    x_ref = path[0] * t_param ** 3 + path[1] * t_param ** 2 + path[2] * t_param + path[0]
     y_ref = t_param
     e_c_hat = dist_line_from_point(path_deriv(path, y_ref), y_ref, x_ref, state.y, state.x)
     e_l_hat = dist_line_from_point(1 / path_deriv(path, y_ref), y_ref, x_ref, state.y, state.x)
-    return q_c*e_c_hat**2 + q_l*e_l_hat**2 - gamma*V_max
+    return q_c * e_c_hat ** 2 + q_l * e_l_hat ** 2 - gamma * V_max
 
 
 def R(command):
     return np.transpose(np.array(command)).dot(cost_R.dot(np.array(command)))
 
 
-def L(dyn_m, kin_m, command):
+def L(dyn_m, command):
     beta_dyn = math.atan2(dyn_m.y_dot, dyn_m.x_dot)
     beta_kin = math.atan2(math.tan(command[1]) * L_REAR, (L_REAR + L_FRONT))
     return q_beta * (beta_kin - beta_dyn) ** 2
 
 
 def C(slack):
-    return q_s * slack + q_ss * (slack**2)
+    return q_s * slack + q_ss * (slack ** 2)
 
 
-def do_step(integrator: Integration, command, path):
+def do_step(integrator: Integration, command):
     integrator.RK4(command[1], command[0])
 
 
 def step_cost(integrator: Integration, command, path, slack):
-    return J(integrator.state, path, integrator.t_param) + R(command) + L(integrator.dyn_m, integrator.kin_m,
-                                                                          command) + C(slack)
+    return J(integrator.state, path, integrator.t_param) + R(command) + L(integrator.dyn_m, command) + C(slack)
 
 
 def constraints_cost_calc(integrator: Integration, command, slack, path):
@@ -111,7 +110,7 @@ def constraints_cost_calc(integrator: Integration, command, slack, path):
     return constraints_cost
 
 
-def total_cost_calc(state, commands, slack, path, steps_cost=None, prev_total_cost=0, prev_t_param=0, new_state=False):
+def total_cost_calc(state, commands, slack, path, sub_horizon, steps_cost=None, prev_total_cost=0, prev_t_param=0, new_state=False):
     """
         params:
         -------------
@@ -138,21 +137,21 @@ def total_cost_calc(state, commands, slack, path, steps_cost=None, prev_total_co
         t_param = prev_t_param
     integrator = Integration(state=state, t_param=t_param)
     # this calc is done while no new state from state estimation was given and no internal (MPC) time step has passed
-    if len(commands) > 1 or new_state:
+    if (len(commands) / 2) > 1 or new_state:
         steps_cost = Queue()
-        for step in range(horizon):
-            step_c = constraints_cost_calc(integrator, commands[step], slack[step], path)
-            step_c += step_cost(integrator, commands[step], path, slack[step])
+        for step in range(sub_horizon):
+            step_c = constraints_cost_calc(integrator, commands[:, step], slack[step], path)
+            step_c += step_cost(integrator, commands[:, step], path, slack[step])
             steps_cost.put(step_c)
             total_cost += step_c
-            do_step(integrator, commands[step], path)
+            do_step(integrator, commands[:, step])
 
     # this calc is done after at least one internal time step was taken but no new state was given from state estimation
     else:
-        step_c = constraints_cost_calc(integrator, commands[0], slack[0], path)
-        step_c += step_cost(integrator, commands[0], path, slack[0])
+        step_c = constraints_cost_calc(integrator, commands[:, 0], slack[0], path)
+        step_c += step_cost(integrator, commands[:, 0], path, slack[0])
         total_cost = prev_total_cost - steps_cost.get(0) + step_c
         steps_cost.put(step_c)
-        do_step(integrator, commands[0], path)
+        do_step(integrator, commands[:, 0],)
 
     return total_cost, integrator.state, steps_cost, integrator.t_param
