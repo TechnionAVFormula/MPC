@@ -70,11 +70,11 @@ class Integration(Order):
         return np.array(self.lambd(dyn_state_deriv[0]) * dyn_state_deriv) + np.array(
             (1 - self.lambd(kin_state_deriv[0])) * kin_state_deriv)
 
-    def realign(self, state):
+    def realign(self, state, t_param=0):
         self.kin_m = KinModel(state)
         self.dyn_m = DynamicState(state)
         self.state = state
-        self.t_param = 0
+        self.t_param = t_param
 
 
 def main():

@@ -93,7 +93,7 @@ class MomentumSGD(Optimizer):
 
 
 class DMD(Optimizer):
-    def __init__(self, params, min_func, step_func, control_dist, state_uncertainty, sub_opt_depth, learn_rate=1e-3):
+    def __init__(self, params, min_func, step_func, control_dist, state_uncertainty, sub_opt_depth, path, learn_rate=1e-3):
         """
         :param params: The model parameters to optimize
         :param learn_rate: Learning rate vector (size = horizon)
@@ -120,20 +120,25 @@ class DMD(Optimizer):
         self.sub_horizon = torch.floor(horizon / 10)
         self.x = [0.0] * 6
         self.theta_idx = 0
+        self.path = path
         self.state_uncertainty = state_uncertainty
         self.integrator = Integration(self.x)
 
     def update_state(self, state):
         self.x = state
 
-    def find_minima(self, theta_tilda, x):
+    def update_path(self, path):
+        self.path = path
+
+    def find_minima(self, theta_tilda, slack_tilda, x):
         theta = theta_tilda
+        slack = slack_tilda
         loss_per_iteration = torch.zeros(self.sub_opt_depth)
         loss = Tensor([1, 1], requires_grad=True)
 
         for i in range(self.sub_opt_depth):
             # update the loss tensor
-            loss = self.min_func(theta, x)
+            loss = self.min_func(theta, x, self.path, slack, self.integrator.t_param)
             # update the iterations loss
             loss_per_iteration[i] = loss
 
@@ -142,14 +147,16 @@ class DMD(Optimizer):
             if i > 3 and np.average(loss_per_iteration[i - 3:i]) <= loss_per_iteration[i]:
                 break
             # update the theta vector
-            theta = self.step_func(theta, loss)
+            theta, slack = self.step_func(theta, slack, self.control_dist, self.learn_rate, x, self.path, self.integrator.t_param)
 
-        return theta
+        return theta, slack
 
     # do Algorithm 1 step
     def step(self):
         # the final action vector
         theta = torch.zeros([2, horizon + self.sub_horizon], requires_grad=True)
+        slack = torch.zeros([1, horizon + self.sub_horizon], requires_grad=True)
+
         # u[0,:] - D, u[1,:] - delta
         u = torch.zeros([2, horizon + self.sub_horizon])
         # first state
@@ -159,10 +166,11 @@ class DMD(Optimizer):
 
         for t in range(horizon):
             theta_tilda = theta[:, t:t + self.sub_horizon]
+            slack_tilda = slack[t:t + self.sub_horizon]
             # update the theta vector number of times -> full optimization for sub horizon
             # for loop with an exit if, of optimization steps to be closer to full optimization for sub horizon.
             # exit loop if you reached local minima before the end of the loop
-            theta[:, t:t + self.sub_horizon] = self.find_minima(theta_tilda, x_curr)
+            theta[:, t:t + self.sub_horizon], slack[t:t + self.sub_horizon] = self.find_minima(theta_tilda, slack_tilda, x_curr)
 
             # choose an action vector from the distribution and theta param
             u[:, t:t + self.sub_horizon] = self.control_dist(theta[:, t:t + self.sub_horizon])
@@ -170,13 +178,15 @@ class DMD(Optimizer):
             # choose an state estimation with regard to the chosen action and state normal distribution
             self.integrator.RK4(u[1, t], u[0, t])
             mean = self.integrator.state
+            t_param = self.integrator.t_param
             x_curr = np.random.normal(mean, self.state_uncertainty)
             # update the integrator to the current state
-            self.integrator.realign(x_curr)
+            self.integrator.realign(x_curr, t_param)
 
             # shift theta
             #   - most of it is done automatically by the for loop, need to fill the last cell, now zero
             if t < horizon - 1:  # to not go out of range for theta, the shift in the last ran is not needed.
                 theta[:, t + self.sub_horizon + 1] = theta[:, t + self.sub_horizon]
+                slack[t + self.sub_horizon + 1] = slack[t + self.sub_horizon]
 
         return u
