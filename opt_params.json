@@ -13,7 +13,7 @@
 
     "R_track"                   : 2.5,
   
-    "horizon"                   : 44,
+    "horizon"                   : 40,
 
     "sigma_sqr_gd"              : 0.09
   }

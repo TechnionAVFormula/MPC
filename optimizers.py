@@ -3,9 +3,9 @@ import torch
 from torch import Tensor
 import json
 import numpy as np
-from .Integration import Integration
+from Integration import Integration
 
-OPT_PARAMS = json.loads(open("opt_params.json", "r").read())
+OPT_PARAMS = json.loads(open("C:/Users/DELL/OneDrive - Technion/FormulaStudentAV/Code/MPC/MPC/opt_params.json", "r").read())
 
 horizon = OPT_PARAMS["horizon"]
 
@@ -117,12 +117,15 @@ class DMD(Optimizer):
         self.step_func = step_func
 
         self.control_dist = control_dist
-        self.sub_horizon = torch.floor(horizon / 10)
+        self.sub_horizon = int(np.floor(horizon / 10))
         self.x = [0.0] * 6
         self.theta_idx = 0
         self.path = path
         self.state_uncertainty = state_uncertainty
         self.integrator = Integration(self.x)
+
+        # for debug / measuring purposes
+        self.loss_log = []
 
     def update_state(self, state):
         self.x = state
@@ -132,22 +135,28 @@ class DMD(Optimizer):
 
     def find_minima(self, theta_tilda, slack_tilda, x):
         theta = theta_tilda
+        theta.retain_grad()
         slack = slack_tilda
+        slack.retain_grad()
         loss_per_iteration = torch.zeros(self.sub_opt_depth)
-        loss = Tensor([1, 1], requires_grad=True)
+        # loss = torch.zeros(1, requires_grad=True)
 
         for i in range(self.sub_opt_depth):
             # update the loss tensor
-            loss = self.min_func(theta, x, self.path, slack, self.integrator.t_param)
-            # update the iterations loss
-            loss_per_iteration[i] = loss
+            loss_per_iteration[i] = self.min_func(theta, x, self.path, slack, self.integrator.t_param)
 
             # check if we reached a local minima already.
             # checks by comparing to the curr loss to the average of the last 3 losses.
             if i > 3 and np.average(loss_per_iteration[i - 3:i]) <= loss_per_iteration[i]:
                 break
             # update the theta vector
-            theta, slack = self.step_func(theta, slack, self.control_dist, self.learn_rate, x, self.path, self.integrator.t_param)
+            loss_per_iteration[i].backward()
+            self.step_func(theta, slack, self.control_dist, self.learn_rate, x, self.path, self.integrator.t_param)
+            print(theta)
+            print(slack)
+
+        # for logging purposes
+        self.loss_log.append(loss_per_iteration)
 
         return theta, slack
 

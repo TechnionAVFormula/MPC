@@ -1,15 +1,16 @@
-from simulator import Simulator
+from sim import Sim
 from optimizers import DMD
 from DescentFunctions import gd_step, gd_loss
 import torch
 
 
 def normal_dist_vec(vec, mean=0, std=0.5):
-    return torch.normal(mean, std, size=(2, len(vec)/2), generator=None, out=None)
+    return torch.normal(mean, std, size=(2, int(len(vec)/2)), generator=None, out=None)
 
 
 def main():
     # test the DMD
+    torch.autograd.set_detect_anomaly(True)
     params = []
     min_func = gd_loss
     step_func = gd_step
@@ -30,7 +31,7 @@ def main():
     # for i in range(300):
     #     commands.append([0., 0.01])
 
-    sim = Simulator(right_edge=right_edge, left_edge=left_edge, commands=commands)
+    sim = Sim(right_edge=right_edge, left_edge=left_edge, commands=commands)
     sim.plot_final_drive()
 
 

@@ -8,7 +8,7 @@ VEHICLE_LEN_X = 1
 VEHICLE_LEN_Y = 1
 
 
-class Simulator:
+class Sim:
     def __init__(self, right_edge, left_edge, commands, road_length=200, dt=0.5):
         self.right_edge = right_edge
         self.left_edge = left_edge
@@ -81,7 +81,7 @@ class Simulator:
         plt.plot(x_left_edge, y_edge, marker='', color='olive', linewidth=4)
 
         for i in range(len(self.commands)):
-            sim = Simulator(right_edge=self.right_edge, left_edge=self.left_edge, commands=self.commands[:i])
+            sim = Sim(right_edge=self.right_edge, left_edge=self.left_edge, commands=self.commands[:i])
             # plot the 0-i steps of the drive
             sim.__calc_driving_steps()
             plt.plot(sim.steps_x, sim.steps_y, marker='o', markerfacecolor='blue', markersize=12, color='skyblue',

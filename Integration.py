@@ -1,10 +1,10 @@
 import numpy as np
 import math
-from .KinModel import KinModel
-from .dynamic_model import DynamicState, Order
+from KinModel import KinModel
+from dynamic_model import DynamicState, Order
 import json
 
-VEHICLE_DATA = json.loads(open("vehicle_data.json", "r").read())
+VEHICLE_DATA = json.loads(open("C:/Users/DELL/OneDrive - Technion/FormulaStudentAV/Code/MPC/MPC/vehicle_data.json", "r").read())
 
 
 Vx_blend_max = VEHICLE_DATA["Vx_blend_max"]
@@ -31,10 +31,10 @@ class Integration(Order):
 
         super().__init__()
 
+        self.state = np.array(state)
         self.dt = dt
         self.kin_m = KinModel(state)
         self.dyn_m = DynamicState(state)
-        self.state = state
         self.t_param = t_param
 
     def RK4(self, delta, D):

@@ -8,9 +8,9 @@ import numpy as np
 import json
 from math import cos, sin, atan2
 
-VEHICLE_DATA = json.loads(open("vehicle_data.json", "r").read())
+VEHICLE_DATA = json.loads(open("C:/Users/DELL/OneDrive - Technion/FormulaStudentAV/Code/MPC/MPC/vehicle_data.json", "r").read())
 
-L = VEHICLE_DATA["Wheel_base"]  # Total length
+L = VEHICLE_DATA["wheel_base"]  # Total length
 L_REAR = VEHICLE_DATA["Rear_length"]  # rear length
 L_FRONT = L - L_REAR  # front length
 MASS = VEHICLE_DATA["Vehicle_weight"]
@@ -28,11 +28,11 @@ C_F = VEHICLE_DATA["Magic_C_front"]
 D_F = VEHICLE_DATA["Magic_D_front"]
 
 # motor model
-C_M = VEHICLE_DATA["Rolling_resistance"]
+C_M = VEHICLE_DATA["Motor_model"]
 
 # shape parameter
-C_R_0 = VEHICLE_DATA["Drag"]
-C_R_2 = VEHICLE_DATA["Drag_proportional"]
+C_R_0 = VEHICLE_DATA["Rolling_resistance"]
+C_R_2 = VEHICLE_DATA["Drag"]
 
 
 """
