@@ -2,7 +2,9 @@ from math import cos, sin
 import numpy as np
 import json
 
-VEHICLE_DATA = json.loads(open("C:/Users/DELL/OneDrive - Technion/FormulaStudentAV/Code/MPC/MPC/vehicle_data.json", "r").read())
+from pathlib import Path
+
+VEHICLE_DATA = json.loads(open(Path("config") / "vehicle_data.json", "r").read())
 
 L = VEHICLE_DATA["wheel_base"]  # Total length
 L_REAR = VEHICLE_DATA["Rear_length"]  # rear length

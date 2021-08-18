@@ -8,7 +8,9 @@ import numpy as np
 import json
 from math import cos, sin, atan2
 
-VEHICLE_DATA = json.loads(open("C:/Users/DELL/OneDrive - Technion/FormulaStudentAV/Code/MPC/MPC/vehicle_data.json", "r").read())
+from pathlib import Path
+
+VEHICLE_DATA = json.loads(open(Path("config") / "vehicle_data.json", "r").read())
 
 L = VEHICLE_DATA["wheel_base"]  # Total length
 L_REAR = VEHICLE_DATA["Rear_length"]  # rear length
@@ -34,7 +36,6 @@ C_M = VEHICLE_DATA["Motor_model"]
 C_R_0 = VEHICLE_DATA["Rolling_resistance"]
 C_R_2 = VEHICLE_DATA["Drag"]
 
-
 """
 parameters of electrical vehicle!!!!
 
@@ -45,7 +46,6 @@ P_TV = VEHICLE_DATA["Proportional_gain_torque"]
 
 class Order:
     def __init__(self):
-
         """
         parameters:
         -----------
@@ -116,24 +116,24 @@ class DynamicState(Order):
         y_dot = v_x * sin(phi) + v_y * cos(phi)
         phi_dot = r
         a_x = (
-            1
-            / MASS
-            * (tire_force_x_ - front_tire_force_y_ * sin(delta) + MASS * v_y * r)
+                1
+                / MASS
+                * (tire_force_x_ - front_tire_force_y_ * sin(delta) + MASS * v_y * r)
         )
         a_y = (
-            1
-            / MASS
-            * (rear_tire_force_y_ + front_tire_force_y_ * cos(delta) - MASS * v_x * r)
+                1
+                / MASS
+                * (rear_tire_force_y_ + front_tire_force_y_ * cos(delta) - MASS * v_x * r)
         )
 
         r_dot = (
-            1
-            / I_z
-            * (
-                front_tire_force_y_ * L_FRONT * cos(delta)
-                - rear_tire_force_y_ * L_REAR
-                + torque_moment_
-            )
+                1
+                / I_z
+                * (
+                        front_tire_force_y_ * L_FRONT * cos(delta)
+                        - rear_tire_force_y_ * L_REAR
+                        + torque_moment_
+                )
         )
 
         return np.array([x_dot, y_dot, phi_dot, a_x, a_y, r_dot])

@@ -1,9 +1,12 @@
 from cost import total_cost_calc
 import json
 
-OPT_PARAMS = json.loads(open("C:/Users/DELL/OneDrive - Technion/FormulaStudentAV/Code/MPC/MPC/opt_params.json", "r").read())
+from pathlib import Path
+
+OPT_PARAMS = json.loads(open(Path("config") / "opt_params.json", "r").read())
 
 sigma_sqr_gd = OPT_PARAMS["sigma_sqr_gd"]
+
 
 ################## Gradient Descent functions ###################
 
@@ -12,7 +15,8 @@ sigma_sqr_gd = OPT_PARAMS["sigma_sqr_gd"]
 
 
 def gd_loss(theta, state, path, slack, t_param):
-    total_cost, stat, steps_cost, t = total_cost_calc(state, theta, slack, path, theta.shape[1], t_param, new_state=True)
+    total_cost, stat, steps_cost, t = total_cost_calc(state, theta, slack, path, theta.shape[1], t_param,
+                                                      new_state=True)
     return total_cost
 
 
@@ -29,9 +33,3 @@ def gd_step(theta, slack, control_dist, learn_rate, state=None, path=None, t_par
     slack -= learn_rate * slack_dot
 
     # return theta, slack
-
-
-
-
-
-

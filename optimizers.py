@@ -5,7 +5,9 @@ import json
 import numpy as np
 from Integration import Integration
 
-OPT_PARAMS = json.loads(open("C:/Users/DELL/OneDrive - Technion/FormulaStudentAV/Code/MPC/MPC/opt_params.json", "r").read())
+from pathlib import Path
+
+OPT_PARAMS = json.loads(open(Path("config") / "opt_params.json", "r").read())
 
 horizon = OPT_PARAMS["horizon"]
 
@@ -93,7 +95,8 @@ class MomentumSGD(Optimizer):
 
 
 class DMD(Optimizer):
-    def __init__(self, params, min_func, step_func, control_dist, state_uncertainty, sub_opt_depth, path, learn_rate=1e-3):
+    def __init__(self, params, min_func, step_func, control_dist, state_uncertainty, sub_opt_depth, path,
+                 learn_rate=1e-3):
         """
         :param params: The model parameters to optimize
         :param learn_rate: Learning rate vector (size = horizon)
@@ -179,7 +182,8 @@ class DMD(Optimizer):
             # update the theta vector number of times -> full optimization for sub horizon
             # for loop with an exit if, of optimization steps to be closer to full optimization for sub horizon.
             # exit loop if you reached local minima before the end of the loop
-            theta[:, t:t + self.sub_horizon], slack[t:t + self.sub_horizon] = self.find_minima(theta_tilda, slack_tilda, x_curr)
+            theta[:, t:t + self.sub_horizon], slack[t:t + self.sub_horizon] = self.find_minima(theta_tilda, slack_tilda,
+                                                                                               x_curr)
 
             # choose an action vector from the distribution and theta param
             u[:, t:t + self.sub_horizon] = self.control_dist(theta[:, t:t + self.sub_horizon])
