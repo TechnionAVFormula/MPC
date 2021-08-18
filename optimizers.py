@@ -5,7 +5,9 @@ import json
 import numpy as np
 from Integration import Integration
 
-OPT_PARAMS = json.loads(open("C:/Users/DELL/OneDrive - Technion/FormulaStudentAV/Code/MPC/MPC/opt_params.json", "r").read())
+from pathlib import Path
+
+OPT_PARAMS = json.loads(open(Path("config") / "opt_params.json", "r").read())
 
 horizon = OPT_PARAMS["horizon"]
 
@@ -93,7 +95,8 @@ class MomentumSGD(Optimizer):
 
 
 class DMD(Optimizer):
-    def __init__(self, params, min_func, step_func, control_dist, state_uncertainty, sub_opt_depth, path, learn_rate=1e-3):
+    def __init__(self, params, min_func, step_func, control_dist, state_uncertainty, sub_opt_depth, path,
+                 learn_rate=1e-3):
         """
         :param params: The model parameters to optimize
         :param learn_rate: Learning rate vector (size = horizon)
@@ -134,36 +137,37 @@ class DMD(Optimizer):
         self.path = path
 
     def find_minima(self, theta_tilda, slack_tilda, x):
-        slack_tilda_optimizer = torch.optim.SGD([slack_tilda], lr=self.learn_rate)
+        theta = theta_tilda
+        theta.retain_grad()
+        slack = slack_tilda
+        slack.retain_grad()
         loss_per_iteration = torch.zeros(self.sub_opt_depth)
         # loss = torch.zeros(1, requires_grad=True)
 
         for i in range(self.sub_opt_depth):
             # update the loss tensor
-            loss_per_iteration[i] = self.min_func(theta_tilda, x, self.path, slack_tilda, self.integrator.t_param)
+            loss_per_iteration[i] = self.min_func(theta, x, self.path, slack, self.integrator.t_param)
 
             # check if we reached a local minima already.
             # checks by comparing to the curr loss to the average of the last 3 losses.
             if i > 3 and np.average(loss_per_iteration[i - 3:i]) <= loss_per_iteration[i]:
                 break
             # update the theta vector
-            slack_tilda_optimizer.zero_grad()
             loss_per_iteration[i].backward()
-            self.step_func(theta_tilda, slack_tilda, self.control_dist, self.learn_rate, x, self.path, self.integrator.t_param)
-            slack_tilda_optimizer.step()
-            print(theta_tilda)
-            print(slack_tilda)
+            self.step_func(theta, slack, self.control_dist, self.learn_rate, x, self.path, self.integrator.t_param)
+            print(theta)
+            print(slack)
 
         # for logging purposes
         self.loss_log.append(loss_per_iteration)
 
-        return theta_tilda, slack_tilda
+        return theta, slack
 
     # do Algorithm 1 step
     def step(self):
         # the final action vector
-        theta = torch.zeros([2, horizon + self.sub_horizon], requires_grad=False)
-        slack = torch.zeros([1, horizon + self.sub_horizon], requires_grad=False)
+        theta = torch.zeros([2, horizon + self.sub_horizon], requires_grad=True)
+        slack = torch.zeros([1, horizon + self.sub_horizon], requires_grad=True)
 
         # u[0,:] - D, u[1,:] - delta
         u = torch.zeros([2, horizon + self.sub_horizon])
@@ -174,12 +178,12 @@ class DMD(Optimizer):
 
         for t in range(horizon):
             theta_tilda = theta[:, t:t + self.sub_horizon]
-            slack_tilda = slack[t:t + self.sub_horizon].clone().detach().requires_grad_(True)
+            slack_tilda = slack[t:t + self.sub_horizon]
             # update the theta vector number of times -> full optimization for sub horizon
             # for loop with an exit if, of optimization steps to be closer to full optimization for sub horizon.
             # exit loop if you reached local minima before the end of the loop
-            theta[:, t:t + self.sub_horizon], slack_updated = self.find_minima(theta_tilda, slack_tilda, x_curr)
-            slack[:, t:t + self.sub_horizon] = slack_updated.clone().detach().requires_grad_(False)
+            theta[:, t:t + self.sub_horizon], slack[t:t + self.sub_horizon] = self.find_minima(theta_tilda, slack_tilda,
+                                                                                               x_curr)
 
             # choose an action vector from the distribution and theta param
             u[:, t:t + self.sub_horizon] = self.control_dist(theta[:, t:t + self.sub_horizon])

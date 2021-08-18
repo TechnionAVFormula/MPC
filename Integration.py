@@ -4,8 +4,9 @@ from KinModel import KinModel
 from dynamic_model import DynamicState, Order
 import json
 
-VEHICLE_DATA = json.loads(open("C:/Users/DELL/OneDrive - Technion/FormulaStudentAV/Code/MPC/MPC/vehicle_data.json", "r").read())
+from pathlib import Path
 
+VEHICLE_DATA = json.loads(open(Path("config") / "vehicle_data.json", "r").read())
 
 Vx_blend_max = VEHICLE_DATA["Vx_blend_max"]
 Vx_blend_min = VEHICLE_DATA["Vx_blend_min"]
@@ -52,7 +53,7 @@ class Integration(Order):
 
         self.state = self.state + 1 / 6 * self.dt * (k1 + 2 * k2 + 2 * k3 + k4)
 
-        self.t_param += self.dt * math.sqrt(self.state[self.v_x]**2 + self.state[self.v_y]**2)
+        self.t_param += self.dt * math.sqrt(self.state[self.v_x] ** 2 + self.state[self.v_y] ** 2)
 
         # k1 = self.model.state_derivative(self.model.State, delta, D)
         # k2 = self.model.state_derivative(self.model.State + self.dt * k1 / 2, delta, D)

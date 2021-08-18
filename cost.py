@@ -5,8 +5,10 @@ import json
 import torch
 from Integration import Integration
 
-VEHICLE_DATA = json.loads(open("C:/Users/DELL/OneDrive - Technion/FormulaStudentAV/Code/MPC/MPC/vehicle_data.json", "r").read())
-OPT_PARAMS = json.loads(open("C:/Users/DELL/OneDrive - Technion/FormulaStudentAV/Code/MPC/MPC/opt_params.json", "r").read())
+from pathlib import Path
+
+VEHICLE_DATA = json.loads(open(Path("config") / "vehicle_data.json", "r").read())
+OPT_PARAMS = json.loads(open(Path("config") / "opt_params.json", "r").read())
 
 L = VEHICLE_DATA["wheel_base"]  # Total length
 L_REAR = VEHICLE_DATA["Rear_length"]  # rear length
@@ -82,13 +84,15 @@ def step_cost(integrator: Integration, command, path, slack):
 
 def constraints_cost_calc(integrator: Integration, command, slack, path):
     constraints_cost = 0
-    x_ref = path[0] * integrator.t_param ** 3 + path[1] * integrator.t_param ** 2 + path[2] * integrator.t_param + path[0]
+    x_ref = path[0] * integrator.t_param ** 3 + path[1] * integrator.t_param ** 2 + path[2] * integrator.t_param + path[
+        0]
     y_ref = integrator.t_param
     # checking the following constraint:
     # (integrator.state.x - x_ref)**2 + (integrator.state.y - y_ref)**2 > R_track**2 + slack
     # this tests if the vehicle is still withing the track boundaries
     constraints_cost -= math.log(
-        (R_track ** 2 + slack) - ((integrator.state[integrator.x] - x_ref) ** 2 + (integrator.state[integrator.y] - y_ref) ** 2))
+        (R_track ** 2 + slack) - (
+                    (integrator.state[integrator.x] - x_ref) ** 2 + (integrator.state[integrator.y] - y_ref) ** 2))
 
     # checking the following constraint:
     # command[0] > 1 or command[0] < -1 or command[1] > max_delta or command[1] < -max_delta
@@ -102,17 +106,18 @@ def constraints_cost_calc(integrator: Integration, command, slack, path):
     # this checks that we do not exceed the elliptic force budget of the tires
     constraints_cost -= math.log(((p_ellipse * D_R) ** 2 - integrator.dyn_m.rear_tire_force_y(
         integrator.dyn_m.rear_slip_angle(integrator.dyn_m.v_y, integrator.dyn_m.v_x)) ** 2 + (
-                                              p_long * integrator.dyn_m.tire_force_x_(command[0],
-                                                                                      integrator.dyn_m.v_x)) ** 2))  # rear wheels
+                                          p_long * integrator.dyn_m.tire_force_x_(command[0],
+                                                                                  integrator.dyn_m.v_x)) ** 2))  # rear wheels
     constraints_cost -= math.log(((p_ellipse * D_F) ** 2 - integrator.dyn_m.front_tire_force_y(
         integrator.dyn_m.front_slip_angle(integrator.dyn_m.v_y, integrator.dyn_m.v_x, command[1])) ** 2 + (
-                                              p_long * integrator.dyn_m.tire_force_x_(command[0],
-                                                                                      integrator.dyn_m.v_x)) ** 2))  # front wheels
+                                          p_long * integrator.dyn_m.tire_force_x_(command[0],
+                                                                                  integrator.dyn_m.v_x)) ** 2))  # front wheels
 
     return constraints_cost
 
 
-def total_cost_calc(state, commands, slack, path, sub_horizon, steps_cost=None, prev_total_cost=0, prev_t_param=0, new_state=False):
+def total_cost_calc(state, commands, slack, path, sub_horizon, steps_cost=None, prev_total_cost=0, prev_t_param=0,
+                    new_state=False):
     """
         params:
         -------------
@@ -156,6 +161,6 @@ def total_cost_calc(state, commands, slack, path, sub_horizon, steps_cost=None, 
         step_c += step_cost(integrator, commands[:, 0], path, slack[0])
         total_cost = prev_total_cost - steps_cost.get(0) + step_c
         steps_cost.put(step_c)
-        do_step(integrator, commands[:, 0],)
+        do_step(integrator, commands[:, 0], )
 
     return total_cost, integrator.state, steps_cost, integrator.t_param
