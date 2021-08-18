@@ -2,19 +2,21 @@ from math import cos, sin
 import numpy as np
 import json
 
-VEHICLE_DATA = json.loads(open("vehicle_data.json", "r").read())
+from pathlib import Path
 
-L = VEHICLE_DATA["Wheel_base"]  # Total length
+VEHICLE_DATA = json.loads(open(Path("config") / "vehicle_data.json", "r").read())
+
+L = VEHICLE_DATA["wheel_base"]  # Total length
 L_REAR = VEHICLE_DATA["Rear_length"]  # rear length
 L_FRONT = L - L_REAR  # front length
 MASS = VEHICLE_DATA["Vehicle_weight"]
 
 # motor model
-C_M = VEHICLE_DATA["Rolling_resistance"]
+C_M = VEHICLE_DATA["Motor_model"]
 
 # shape parameter
-C_R_0 = VEHICLE_DATA["Drag"]
-C_R_2 = VEHICLE_DATA["Drag_proportional"]
+C_R_0 = VEHICLE_DATA["Rolling_resistance"]
+C_R_2 = VEHICLE_DATA["Drag"]
 
 
 class Order:
@@ -47,14 +49,14 @@ class KinModel(Order):
         """
         super().__init__()
         self.State = np.array([x, y, phi, v_x, v_y, r])
-        self.car_info = json.loads(open("vehicle_data.json", "r").read())
+        # self.car_info = json.loads(open("vehicle_data.json", "r").read())
         self.prev_delta = 0
 
     def state_derivative(self, State, delta, D, dt=0.1):
-        v_x = State.curr_state[self.v_x]
-        v_y = State.curr_state[self.v_y]
-        phi = State.curr_state[self.phi]
-        r = State.curr_state[self.r]
+        v_x = State[self.v_x]
+        v_y = State[self.v_y]
+        phi = State[self.phi]
+        r = State[self.r]
 
         f_x = self._tire_force_x(D, v_x)
         delta_dot = self._delta_dot(delta, self.prev_delta, dt)

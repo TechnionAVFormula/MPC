@@ -1,11 +1,12 @@
 import numpy as np
 import math
-from .KinModel import KinModel
-from .dynamic_model import DynamicState, Order
+from KinModel import KinModel
+from dynamic_model import DynamicState, Order
 import json
 
-VEHICLE_DATA = json.loads(open("vehicle_data.json", "r").read())
+from pathlib import Path
 
+VEHICLE_DATA = json.loads(open(Path("config") / "vehicle_data.json", "r").read())
 
 Vx_blend_max = VEHICLE_DATA["Vx_blend_max"]
 Vx_blend_min = VEHICLE_DATA["Vx_blend_min"]
@@ -31,10 +32,10 @@ class Integration(Order):
 
         super().__init__()
 
+        self.state = np.array(state)
         self.dt = dt
         self.kin_m = KinModel(state)
         self.dyn_m = DynamicState(state)
-        self.state = state
         self.t_param = t_param
 
     def RK4(self, delta, D):
@@ -69,6 +70,12 @@ class Integration(Order):
         kin_state_deriv = self.kin_m.state_derivative(state, delta, D)
         return np.array(self.lambd(dyn_state_deriv[0]) * dyn_state_deriv) + np.array(
             (1 - self.lambd(kin_state_deriv[0])) * kin_state_deriv)
+
+    def realign(self, state, t_param=0):
+        self.kin_m = KinModel(state)
+        self.dyn_m = DynamicState(state)
+        self.state = state
+        self.t_param = t_param
 
 
 def main():
