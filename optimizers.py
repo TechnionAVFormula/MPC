@@ -150,10 +150,11 @@ class DMD(Optimizer):
 
             # check if we reached a local minima already.
             # checks by comparing to the curr loss to the average of the last 3 losses.
-            if i > 3 and np.average(loss_per_iteration[i - 3:i]) <= loss_per_iteration[i]:
-                break
+            with torch.no_grad():
+                if i > 3 and np.average(loss_per_iteration[i - 3:i]) <= loss_per_iteration[i]:
+                    break
             # update the theta vector
-            loss_per_iteration[i].backward()
+            loss_per_iteration[i].backward(retain_graph=True)
             self.step_func(theta, slack, self.control_dist, self.learn_rate, x, self.path, self.integrator.t_param)
             print(theta)
             print(slack)

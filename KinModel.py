@@ -48,7 +48,7 @@ class KinModel(Order):
         r   - angular velocity
         """
         super().__init__()
-        self.State = np.array([x, y, phi, v_x, v_y, r])
+        self.State = np.array([x, y, phi, v_x, v_y, r], dtype=object)
         # self.car_info = json.loads(open("vehicle_data.json", "r").read())
         self.prev_delta = 0
 

@@ -74,7 +74,7 @@ class DynamicState(Order):
 
         """
         super().__init__()
-        self.State = np.array([x, y, phi, v_x, v_y, r])
+        self.State = np.array([x, y, phi, v_x, v_y, r], dtype=object)
 
     def state_derivative(self, State, delta, D):
         """
