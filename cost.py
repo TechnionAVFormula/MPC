@@ -149,8 +149,8 @@ def total_cost_calc(state, commands, slack, path, sub_horizon, steps_cost=None, 
     if (len(commands) / 2) > 1 or new_state:
         steps_cost = Queue()
         for step in range(sub_horizon):
-            step_c = constraints_cost_calc(integrator, commands[:, step], slack[:, step], path)
-            step_c += step_cost(integrator, commands[:, step], path, slack[:, step])
+            step_c = constraints_cost_calc(integrator, commands[:, step], slack[step], path)
+            step_c += step_cost(integrator, commands[:, step], path, slack[step])
             steps_cost.put(step_c)
             total_cost += step_c
             do_step(integrator, commands[:, step])
