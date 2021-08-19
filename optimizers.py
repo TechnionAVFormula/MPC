@@ -95,8 +95,7 @@ class MomentumSGD(Optimizer):
 
 
 class DMD(Optimizer):
-    def __init__(self, params, min_func, step_func, control_dist, state_uncertainty, sub_opt_depth, path,
-                 learn_rate=1e-3):
+    def __init__(self, params, min_func, step_func, control_dist, state_uncertainty, sub_opt_depth, path, learn_rate=1e-3):
         """
         :param params: The model parameters to optimize
         :param learn_rate: Learning rate vector (size = horizon)
@@ -150,11 +149,10 @@ class DMD(Optimizer):
 
             # check if we reached a local minima already.
             # checks by comparing to the curr loss to the average of the last 3 losses.
-            with torch.no_grad():
-                if i > 3 and np.average(loss_per_iteration[i - 3:i]) <= loss_per_iteration[i]:
-                    break
+            if i > 3 and np.average(loss_per_iteration[i - 3:i]) <= loss_per_iteration[i]:
+                break
             # update the theta vector
-            loss_per_iteration[i].backward(retain_graph=True)
+            loss_per_iteration[i].backward()
             self.step_func(theta, slack, self.control_dist, self.learn_rate, x, self.path, self.integrator.t_param)
             print(theta)
             print(slack)
@@ -179,11 +177,11 @@ class DMD(Optimizer):
 
         for t in range(horizon):
             theta_tilda = theta[:, t:t + self.sub_horizon]
-            slack_tilda = slack[0, t:t + self.sub_horizon]
+            slack_tilda = slack[t:t + self.sub_horizon]
             # update the theta vector number of times -> full optimization for sub horizon
             # for loop with an exit if, of optimization steps to be closer to full optimization for sub horizon.
             # exit loop if you reached local minima before the end of the loop
-            theta[:, t:t + self.sub_horizon], slack[0, t:t + self.sub_horizon] = self.find_minima(theta_tilda, slack_tilda, x_curr)
+            theta[:, t:t + self.sub_horizon], slack[t:t + self.sub_horizon] = self.find_minima(theta_tilda, slack_tilda, x_curr)
 
             # choose an action vector from the distribution and theta param
             u[:, t:t + self.sub_horizon] = self.control_dist(theta[:, t:t + self.sub_horizon])
@@ -200,6 +198,6 @@ class DMD(Optimizer):
             #   - most of it is done automatically by the for loop, need to fill the last cell, now zero
             if t < horizon - 1:  # to not go out of range for theta, the shift in the last ran is not needed.
                 theta[:, t + self.sub_horizon + 1] = theta[:, t + self.sub_horizon]
-                slack[0, t + self.sub_horizon + 1] = slack[0, t + self.sub_horizon]
+                slack[t + self.sub_horizon + 1] = slack[t + self.sub_horizon]
 
         return u
