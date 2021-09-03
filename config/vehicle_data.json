@@ -1,30 +1,29 @@
 {
-    "wheel_base"                : 0.287,
-    "Rear_length"               : 0.0545,
- 
-    "Vehicle_weight"            : 0.0518,
-    "Vehicle_inertia_moment"    : 0.00035,
-  
-    "Magic_B_rear" 	            : 3.3852,
-    "Magic_C_rear" 	            : 1.2691,
-    "Magic_D_rear" 	            : 0.1737,
-  
-    "Magic_B_front"	            : 2.579,
-    "Magic_C_front"             : 1.2,
-    "Magic_D_front"             : 0.192,
-  
-    "Rollin_resistance" 	    : 0.041,
-    "Drag" 	                    : 27.8E-6,
-    "Dra_proportional"      	: 0.029,
-    "Proportional_gain_torque" 	: 0.033,
+  "wheel_base"                : 1.535,
+  "Rear_length"               : 1.12,
 
-    "p_long"                    : 2,
-    "p_ellipse"                 : 3,
+  "Vehicle_weight"            : 200,
+  "Vehicle_inertia_moment"    : 115.4091,
 
-    "Vx_blend_min"              : 5,
-    "Vx_blend_max"              : 3,
-    "Vehicle_max_speed"         : 22,
-  
-    "maxAlpha"                  : 44
-  }
-  
+  "Magic_B_rear" 	            : 3.3852,
+  "Magic_C_rear" 	            : 1.2691,
+  "Magic_D_rear" 	            : 0.1737,
+
+  "Magic_B_front"	            : 2.579,
+  "Magic_C_front"             : 1.2,
+  "Magic_D_front"             : 0.192,
+
+  "Rolling_resistance" 	      : 0.041,
+  "Drag" 	                    : 1.0045,
+  "Motor_model"      	        : 0.029,
+  "Proportional_gain_torque" 	: 0.033,
+
+  "p_long"                    : 2,
+  "p_ellipse"                 : 3,
+
+  "Vx_blend_min"              : 5,
+  "Vx_blend_max"              : 3,
+  "Vehicle_max_speed"         : 22,
+
+  "maxAlpha"                  : 22
+}

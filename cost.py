@@ -1,8 +1,6 @@
 import math
 import numpy as np
-from queue import Queue
 import json
-import torch
 from Integration import Integration
 
 from pathlib import Path
@@ -32,7 +30,7 @@ q_c = OPT_PARAMS["q_c"]
 q_l = OPT_PARAMS["q_l"]
 gamma = OPT_PARAMS["gamma"]
 
-horizon = OPT_PARAMS["horizon"]
+static_horizon = OPT_PARAMS["horizon"]
 
 R_track = OPT_PARAMS["R_track"]
 V_max = VEHICLE_DATA["Vehicle_max_speed"]
@@ -60,7 +58,7 @@ def J(state, path, t_param):
 
 
 def R(command):
-    return torch.matmul(torch.transpose(command, -1, 0), torch.matmul(cost_R, command))
+    return command @ cost_R @ command
 
 
 def L(dyn_m, command):
@@ -70,7 +68,6 @@ def L(dyn_m, command):
 
 
 def C(slack):
-    print(slack)
     return q_s * slack + q_ss * (slack ** 2)
 
 
@@ -114,50 +111,36 @@ def constraints_cost_calc(integrator: Integration, command, slack, path):
     return constraints_cost
 
 
-def total_cost_calc(state, commands, slack, path, sub_horizon, steps_cost=None, prev_total_cost=0, prev_t_param=0, new_state=False):
+def total_cost_calc(inputs, state, path, horizon=static_horizon):
     """
         params:
         -------------
         state - np.array, vehicle state after blend
-        commands - 2 x horizon torch.Tensor, commands for cost calc
-                    commands[i][0] - D
-                    commands[i][1] - delta
-        slack - 1 x horizon np.array, slack vars to be optimized
+        inputs - horizon * 3 1-D np.ndarray, commands for cost calc
+                 after the reshape it will look like this so that the function can calulate properly
+                    inputs[0][i] - D
+                    inputs[1][i] - delta
+                    inputs[2][i] - slack
         path - np.array holding the parameters of the path polynomial
-        steps_cost - Queue of the costs of the calculated costs
-        prev_total_cost - the previous output of this function
-        prev_t_param - the previous parameter for the path parametrization
-        new_state - flag denoting whether or not we got a new state from state estimation and the state needs to be realigned
 
         return:
         --------------
         total_cost - cost of given command matrix
         horizon_state - last state to be in after horizon drive
-        steps_cost - cost of every step along the way, 1 x horizon vector
-        horizon_param - the parameter of the path at the horizon location
     """
+    # this is done so that we enter a single 1-D with shape(horizon*3,) into the minimize function
+    inputs = np.reshape(inputs, (3, horizon))
+    commands = inputs[:2, :]
+    slack = inputs[2, :]
+    
     total_cost = 0
-    if new_state:
-        t_param = 0
-    else:
-        t_param = prev_t_param
-    integrator = Integration(state=state, t_param=t_param)
-    # this calc is done while no new state from state estimation was given and no internal (MPC) time step has passed
-    if (len(commands) / 2) > 1 or new_state:
-        steps_cost = Queue()
-        for step in range(sub_horizon):
-            step_c = constraints_cost_calc(integrator, commands[:, step], slack[step], path)
-            step_c += step_cost(integrator, commands[:, step], path, slack[step])
-            steps_cost.put(step_c)
-            total_cost += step_c
-            do_step(integrator, commands[:, step])
+    t_param = 0
+    integrator = Integration(state=state)
+    # this calc is done while no new state from state estimation was given
+    for step in range(horizon):
+        step_c = constraints_cost_calc(integrator, commands[:, step], slack[step], path)
+        step_c += step_cost(integrator, commands[:, step], path, slack[step])
+        total_cost += step_c
+        do_step(integrator, commands[:, step])
 
-    # this calc is done after at least one internal time step was taken but no new state was given from state estimation
-    else:
-        step_c = constraints_cost_calc(integrator, commands[:, 0], slack[0], path)
-        step_c += step_cost(integrator, commands[:, 0], path, slack[0])
-        total_cost = prev_total_cost - steps_cost.get(0) + step_c
-        steps_cost.put(step_c)
-        do_step(integrator, commands[:, 0],)
-
-    return total_cost, integrator.state, steps_cost, integrator.t_param
+    return total_cost
