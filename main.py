@@ -21,10 +21,6 @@ def main_runner():
     step = 0
     while step < 3:
         print("state before opt: ", integrator.state, "\n")
-        # cnsts = ({'type': 'ineq', 'fun': cost.track_constraint()},
-        #          {},
-        #          {})
-        # D, delta, slack
         lb_D = -1 * np.ones(horizon)
         lb_delta = -max_delta * np.ones(horizon)
         lb_slack = -np.inf * np.ones(horizon)
