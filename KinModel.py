@@ -68,7 +68,7 @@ class KinModel(Order):
         a_y = (delta_dot * v_x + delta_dot * a_x) * L_REAR / L
         r_dot = (delta_dot * v_x + delta_dot * a_x) / L
 
-        return np.array([x_dot, y_dot, phi_dot, a_x, a_y, r_dot])
+        return np.array([x_dot, y_dot, phi_dot, a_x.item(), a_y.item(), r_dot.item()])
 
     @staticmethod
     def _tire_force_x(D, v_x):

@@ -101,3 +101,23 @@ class Sim:
             plt.show()
 
         return
+
+
+if __name__ == '__main__':
+    # from pathlib import Path
+    # import _pickle as pickle
+    #
+    # out_folder = Path('out')
+    #
+    # with open(out_folder / "commands_latest", 'rb') as f:
+    #     commands = pickle.load(f)
+
+    # test - drive straight as fast as you can, check with sim
+    right_edge = [0, 0, 0, 3]
+    left_edge = [0, 0, 0, -3]
+    commands = []
+    for i in range(300):
+        commands.append([0., 0.01])
+
+    sim = Sim(right_edge=right_edge, left_edge=left_edge, commands=commands)
+    sim.plot_final_drive()

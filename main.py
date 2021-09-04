@@ -24,15 +24,18 @@ def main():
               learn_rate=1e-3)
     commands = dmd.step()
 
-    # test - drive straight as fast as you can, check with sim
-    right_edge = [0, 0, 0, 3]
-    left_edge = [0, 0, 0, -3]
-    # commands = []
-    # for i in range(300):
-    #     commands.append([0., 0.01])
+    from pathlib import Path
+    import _pickle as pickle
+    from datetime import datetime
 
-    sim = Sim(right_edge=right_edge, left_edge=left_edge, commands=commands)
-    sim.plot_final_drive()
+    out_folder = Path('out')
+    now = datetime.now()
+
+    with open(out_folder / f"commands_{now.year}-{now.month}-{now.day}_{now.hour}-{now.minute}", "wb") as f:
+        pickle.dump(commands, f)
+
+    with open(out_folder / f"commands_latest", "wb") as f:
+        pickle.dump(commands, f)
 
 
 if __name__ == "__main__":

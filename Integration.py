@@ -68,7 +68,7 @@ class Integration(Order):
     def blend(self, state, delta, D):
         dyn_state_deriv = self.dyn_m.state_derivative(state, delta, D)
         kin_state_deriv = self.kin_m.state_derivative(state, delta, D)
-        return np.array(self.lambd(dyn_state_deriv[0]) * dyn_state_deriv) + np.array(
+        return (self.lambd(dyn_state_deriv[0]) * dyn_state_deriv) + (
             (1 - self.lambd(kin_state_deriv[0])) * kin_state_deriv)
 
     def realign(self, state, t_param=0):

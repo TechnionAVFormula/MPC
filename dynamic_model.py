@@ -136,7 +136,7 @@ class DynamicState(Order):
                 )
         )
 
-        return np.array([x_dot, y_dot, phi_dot, a_x, a_y, r_dot])
+        return np.array([x_dot, y_dot, phi_dot, a_x.item(), a_y, r_dot.item()])
 
     @staticmethod
     def rear_slip_angle(v_y, v_x):
