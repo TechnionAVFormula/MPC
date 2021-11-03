@@ -1,9 +1,9 @@
 {
     "wheel_base"                : 1.535,
-    "Rear_length"               : 1.12,
+    "Rear_length"               : 0.951,
  
     "Vehicle_weight"            : 200,
-    "Vehicle_inertia_moment"    : 115.4091,
+    "Vehicle_inertia_moment"    : 326,
   
     "Magic_B_rear" 	            : 10,
     "Magic_C_rear" 	            : 1.8,
