@@ -136,7 +136,7 @@ class DynamicState(Order):
                 )
         )
 
-        return np.array([x_dot, y_dot, phi_dot, a_x.item(), a_y, r_dot.item()])
+        return np.array([x_dot, y_dot, phi_dot, a_x, a_y, r_dot])
 
     @staticmethod
     def rear_slip_angle(v_y, v_x):
@@ -161,13 +161,13 @@ class DynamicState(Order):
     @staticmethod
     def tire_force_x_(D, v_x):
         tire_force_x_ = C_M * D - C_R_0 - C_R_2 * v_x ** 2
-        return tire_force_x_
+        return tire_force_x_.item()
 
     @staticmethod
     def torque_moment(v_x, r, delta):
         r_target = delta * v_x / L
         torque_moment_ = (r_target - r) * P_TV
-        return torque_moment_
+        return torque_moment_.item()
 
 
 def main():

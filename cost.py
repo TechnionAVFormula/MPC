@@ -70,7 +70,6 @@ def L(dyn_m, command):
 
 
 def C(slack):
-    print(slack)
     return q_s * slack + q_ss * (slack ** 2)
 
 
@@ -90,15 +89,15 @@ def constraints_cost_calc(integrator: Integration, command, slack, path):
     # checking the following constraint:
     # (integrator.state.x - x_ref)**2 + (integrator.state.y - y_ref)**2 > R_track**2 + slack
     # this tests if the vehicle is still withing the track boundaries
-    constraints_cost -= math.log(abs(
-        (R_track ** 2 + slack) - (
-                    (integrator.state[integrator.x] - x_ref) ** 2 + (integrator.state[integrator.y] - y_ref) ** 2)))
+    constraints_cost -= math.log(abs((
+        (integrator.state[integrator.x] - x_ref) ** 2 + (integrator.state[integrator.y] - y_ref) ** 2) -
+                                 (R_track ** 2 + slack)))
 
     # checking the following constraint:
     # command[0] > 1 or command[0] < -1 or command[1] > max_delta or command[1] < -max_delta
     # this tests if the command given is within the physical limits of the vehicle
-    constraints_cost -= math.log(abs(1 - command[0]))  # gas/break command
-    constraints_cost -= math.log(abs(max_delta - command[1]))  # gas/break command
+    constraints_cost -= math.log(abs(1 - abs(command[0])))  # gas/break command
+    constraints_cost -= math.log(abs(max_delta - abs(command[1])))  # gas/break command
 
     # checking the following constraint:
     # (F_r,y)^2 + (p_long * F_r,x)^2 < (p_ellipse * D_r)^2

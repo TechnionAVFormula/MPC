@@ -68,14 +68,14 @@ class KinModel(Order):
         a_y = (delta_dot * v_x + delta_dot * a_x) * L_REAR / L
         r_dot = (delta_dot * v_x + delta_dot * a_x) / L
 
-        return np.array([x_dot, y_dot, phi_dot, a_x.item(), a_y.item(), r_dot.item()])
+        return np.array([x_dot, y_dot, phi_dot, a_x, a_y, r_dot])
 
     @staticmethod
     def _tire_force_x(D, v_x):
         tire_force_x_ = C_M * D - C_R_0 - C_R_2 * v_x ** 2
-        return tire_force_x_
+        return tire_force_x_.item()
 
     @staticmethod
     def _delta_dot(delta, prev_delta, dt):
         _delta_dot = ((delta - prev_delta) / dt)
-        return _delta_dot
+        return _delta_dot.item()
