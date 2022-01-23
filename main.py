@@ -12,6 +12,7 @@ def normal_dist_vec(vec, mean=0, std=0.5):
 
 
 def main():
+    from time import perf_counter
     # test the DMD
     torch.autograd.set_detect_anomaly(True)
     params = []
@@ -20,13 +21,15 @@ def main():
     control_dist = normal_dist_vec
     state_uncertainty = 0.5
     sub_opt_depth = 10
-    path_str_center = [0, 0, 1, 0]
-    path_str_side = [0, 0, 1, 0.5]
-    path_par_center = [0, 1, 0, 0]
+    path_str_center = [0, 0, 0, 0]
+    path_str_side = [0, 0, 1, 0]
+    path_par_center = [0, 0.001, 0.0001, 0]
+    start = perf_counter()
     dmd = DMD(params, min_func, step_func, control_dist, state_uncertainty, sub_opt_depth, path_par_center,
-              learn_rate=1e-3)
+              learn_rate=0.35)
     commands = dmd.step()
-
+    end = perf_counter()
+    print(f'ran {end-start} s ')
     # plot the optimization graph
     # plt.plot(dmd.loss_log, range(len(dmd.loss_log)))
     from itertools import chain
