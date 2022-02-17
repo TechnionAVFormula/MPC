@@ -16,7 +16,7 @@ max_delta = VEHICLE_DATA["maxAlpha"]
 
 def main_runner():
     init_state = np.zeros(6)
-    path = np.array([-0.00001, 0, 0.1, 0])
+    path = np.array([0, 0.0001, 0.0001, 0])
     integrator = Integration(init_state)
     step = 0
     while step < 3:
@@ -34,7 +34,7 @@ def main_runner():
         res = opt.minimize(cost.total_cost_calc, np.zeros(horizon*3), args=(integrator.state, path, horizon), bounds=bnds)
         if res.success:
             commands = np.reshape(res.x, (3, horizon))[:2, :]
-            print("commands: ", commands, "\n")
+            print("commands: ", repr(commands), "\n")
             slack = np.reshape(res.x, (3, horizon))[2, :]
             print("slack: ", slack, "\n")
             
@@ -51,4 +51,8 @@ def main_runner():
 
 
 if __name__ == "__main__":
+    from time import perf_counter
+    start = perf_counter()
     main_runner()
+    end = perf_counter()
+    print(f'ran {end-start} s ')
