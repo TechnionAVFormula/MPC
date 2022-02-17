@@ -179,6 +179,25 @@ class MPC(Order):
         pass
 
 
+if __name__ == '__main__':
+    Rmax = 0.5
+    Initial_Position = np.zeros([5, 1])
+    # Optimal_path = ......!!
+    # For first running we will check Path_center = Optimal_path
+    Optimal_path = np.array([[5, 10, 15, 20], [5, 10, 15, 20]])
+    Path_center = Optimal_path
+    Weights = np.ones([6, 1])
+    Time_Delta = 1
+    ##Genetic initialization
+    Number_of_Candidate = 10
+    # control efforts
+    Val_max = np.array([4, mat.pi / 4, 4, mat.pi / 4, 4, mat.pi / 4])
+    val_min = np.array([-2, -mat.pi / 4, -2, -mat.pi / 4, -2, -mat.pi / 4])
+    resulotion = 0.01
+    # control arguments gas and steering
+    contorlarguments = 6
+    pass
+
 ##RunningFunciton
 # Rmax = 0.5
 # Initial_Position = np.zeros([5, 1])
