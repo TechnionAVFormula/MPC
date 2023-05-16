@@ -21,8 +21,8 @@
     "p_long"                    : 2,
     "p_ellipse"                 : 3,
 
-    "Vx_blend_min"              : 5,
-    "Vx_blend_max"              : 3,
+    "Vx_blend_min"              : 3,
+    "Vx_blend_max"              : 5,
     "Vehicle_max_speed"         : 22,
   
     "maxAlpha"                  : 44

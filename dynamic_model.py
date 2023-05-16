@@ -96,7 +96,7 @@ class DynamicState(Order):
         rear_slip_angle_        - rear slip angle
         front_slip_angle_       - front slip angle
         rear_tire_force_y_      - lateral rear tire force 
-        front_tire_force_y_     - lateral fron tire force
+        front_tire_force_y_     - lateral front tire force
         tire_force_x_           - longitudinal tire force
 
         """
@@ -105,8 +105,8 @@ class DynamicState(Order):
         v_y = State[self.v_y]
         r = State[self.r]
 
-        rear_slip_angle_ = self.rear_slip_angle(v_y, v_x)
-        front_slip_angle_ = self.front_slip_angle(v_y, v_x, delta)
+        rear_slip_angle_ = self.rear_slip_angle(v_y, v_x, r)
+        front_slip_angle_ = self.front_slip_angle(v_y, v_x, r, delta)
         rear_tire_force_y_ = self.rear_tire_force_y(rear_slip_angle_)
         front_tire_force_y_ = self.front_tire_force_y(front_slip_angle_)
         tire_force_x_ = self.tire_force_x_(D, v_x)
@@ -115,37 +115,20 @@ class DynamicState(Order):
         x_dot = v_x * cos(phi) - v_y * sin(phi)
         y_dot = v_x * sin(phi) + v_y * cos(phi)
         phi_dot = r
-        a_x = (
-            1
-            / MASS
-            * (tire_force_x_ - front_tire_force_y_ * sin(delta) + MASS * v_y * r)
-        )
-        a_y = (
-            1
-            / MASS
-            * (rear_tire_force_y_ + front_tire_force_y_ * cos(delta) - MASS * v_x * r)
-        )
-
-        r_dot = (
-            1
-            / I_z
-            * (
-                front_tire_force_y_ * L_FRONT * cos(delta)
-                - rear_tire_force_y_ * L_REAR
-                + torque_moment_
-            )
-        )
+        a_x = (1 / MASS * (tire_force_x_ - front_tire_force_y_ * sin(delta) + MASS * v_y * r))
+        a_y = (1 / MASS * (rear_tire_force_y_ + front_tire_force_y_ * cos(delta) - MASS * v_x * r))
+        r_dot = (1 / I_z * (front_tire_force_y_ * L_FRONT * cos(delta) - rear_tire_force_y_ * L_REAR + torque_moment_))
 
         return np.array([x_dot, y_dot, phi_dot, a_x, a_y, r_dot])
 
     @staticmethod
-    def rear_slip_angle(v_y, v_x):
-        rear_slip_angle_ = atan2(v_y - L_REAR, v_x)
+    def rear_slip_angle(v_y, v_x,r):
+        rear_slip_angle_ = atan2(v_y - L_REAR*r, v_x)
         return rear_slip_angle_
 
     @staticmethod
-    def front_slip_angle(v_y, v_x, delta):
-        front_slip_angle_ = atan2(v_y + L_FRONT, v_x) - delta
+    def front_slip_angle(v_y, v_x, r, delta):
+        front_slip_angle_ = atan2(v_y + L_FRONT*r, v_x) - delta
         return front_slip_angle_
 
     @staticmethod
