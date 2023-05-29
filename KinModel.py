@@ -50,30 +50,30 @@ class KinModel(Order):
         self.car_info = json.loads(open("vehicle_data.json", "r").read())
         self.prev_delta = 0
 
-    def state_derivative(self, State, delta, D, dt=0.1):
-        v_x = State.curr_state[self.v_x]
-        v_y = State.curr_state[self.v_y]
-        phi = State.curr_state[self.phi]
-        r = State.curr_state[self.r]
+    def state_derivative(self, State, delta, D, time_delta=0.1):
+        v_x = State[self.v_x]
+        v_y = State[self.v_y]
+        phi = State[self.phi]
+        r = State[self.r]
 
         f_x = self._tire_force_x(D, v_x)
-        delta_dot = self._delta_dot(delta, self.prev_delta, dt)
+        delta_dot = self._delta_dot(delta, self.prev_delta, time_delta)
 
         x_dot = v_x * cos(phi) - v_y * sin(phi)
         y_dot = v_x * sin(phi) - v_y * cos(phi)
         phi_dot = r
         a_x = f_x / MASS
-        a_y = (delta_dot * v_x + delta_dot * a_x) * L_REAR / L
-        r_dot = (delta_dot * v_x + delta_dot * a_x) / L
+        a_y = (delta_dot * v_x + delta * a_x) * L_REAR / L
+        r_dot = (delta_dot * v_x + delta * a_x) / L
 
         return np.array([x_dot, y_dot, phi_dot, a_x, a_y, r_dot])
 
     @staticmethod
     def _tire_force_x(D, v_x):
-        tire_force_x_ = C_M * D - C_R_0 - C_R_2 * v_x ** 2
+        tire_force_x_ =  C_M* D - C_R_0 - C_R_2 * (v_x ** 2)
         return tire_force_x_
 
     @staticmethod
-    def _delta_dot(delta, prev_delta, dt):
-        _delta_dot = ((delta - prev_delta) / dt)
+    def _delta_dot(delta, prev_delta, time_delta):
+        _delta_dot = ((delta - prev_delta) / time_delta)
         return _delta_dot

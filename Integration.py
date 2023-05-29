@@ -64,9 +64,16 @@ class Integration(Order):
     def lambd(self, Vx):
         return min(max((Vx - Vx_blend_min) / (Vx_blend_max - Vx_blend_min), 0), 1)
 
-    def blend(self, state, delta, D):
+    def blend(self, state, delta, D, time_delta=0.1):
+        if (state[3]**2+state[4]**2)**0.5 < Vx_blend_min:
+            kin_state_deriv = self.kin_m.state_derivative(state, delta, D,time_delta)
+            return kin_state_deriv
+        if (state[3]**2+state[4]**2)**0.5 > Vx_blend_max:
+            dyn_state_deriv = self.dyn_m.state_derivative(state, delta, D)#TODO: find negative x speed = (constants?)
+            return dyn_state_deriv
+        
         dyn_state_deriv = self.dyn_m.state_derivative(state, delta, D)
-        kin_state_deriv = self.kin_m.state_derivative(state, delta, D)
+        kin_state_deriv = self.kin_m.state_derivative(state, delta, D,time_delta)
         return np.array(self.lambd(dyn_state_deriv[0]) * dyn_state_deriv) + np.array(
             (1 - self.lambd(kin_state_deriv[0])) * kin_state_deriv)
 
