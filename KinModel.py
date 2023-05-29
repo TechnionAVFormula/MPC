@@ -70,7 +70,7 @@ class KinModel(Order):
 
     @staticmethod
     def _tire_force_x(D, v_x):
-        tire_force_x_ = C_R_2 * D - C_M -  C_R_0* (v_x ** 2)
+        tire_force_x_ =  C_M* D - C_R_0 - C_R_2 * (v_x ** 2)
         return tire_force_x_
 
     @staticmethod
